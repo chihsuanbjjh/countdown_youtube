@@ -11,6 +11,8 @@
       font-family: Arial, sans-serif;
       text-align: center;
       margin: 20px;
+      transition: background-color 1s ease;
+      background-color: #f8f9fa;
     }
 
     .timer-container {
@@ -105,7 +107,6 @@
       font-weight: 500;
     }
 
-    /* 隱藏輸入框的上下箭頭 */
     .timer-inputs input[type="number"]::-webkit-inner-spin-button,
     .timer-inputs input[type="number"]::-webkit-outer-spin-button {
       -webkit-appearance: none;
@@ -116,7 +117,6 @@
       -moz-appearance: textfield;
     }
 
-    /* 數字變化時的動畫效果 */
     @keyframes pulse {
       0% {
         transform: scale(1);
@@ -156,7 +156,6 @@
       background-color: #2980b9;
     }
 
-    /* 禁用按鈕的樣式 */
     button:disabled {
       background-color: #cccccc;
       color: #999999;
@@ -206,12 +205,10 @@
       opacity: 0.8;
     }
 
-    /* 隱藏視頻容器 */
     #videoContainer {
       display: none;
     }
 
-    /* YouTube 設定按鈕縮小 */
     .youtube-container button {
       padding: 8px 12px;
       font-size: 0.9rem;
@@ -231,15 +228,31 @@
       font-style: italic;
       color: #666;
     }
+
+    .bg-initial {
+      background-color: #f8f9fa;
+    }
+
+    .bg-running {
+      background-color: #e3f2fd;
+    }
+
+    .bg-halfway {
+      background-color: #fff3e0;
+    }
+
+    .bg-ending {
+      background-color: #ffebee;
+    }
+
+    .bg-complete {
+      background-color: #e8f5e9;
+    }
   </style>
 </head>
 
 <body>
-  <!-- <h2>倒數計時器 + YouTube 背景音樂</h2> -->
-
   <div class="timer-container">
-
-
     <div class="timer-display-container">
       <div class="timer-circle-container">
         <svg class="timer-circle" viewBox="0 0 100 100">
@@ -261,7 +274,6 @@
     <span>秒</span>
   </div>
   <div class="youtube-container">
-    <!-- YouTube 輸入區域 -->
     <div class="youtube-input-container">
       <select id="youtubeSelect" onchange="handleSelectChange()">
         <option value="" disabled selected>-- 選擇預設音樂 --</option>
@@ -278,19 +290,16 @@
     <div id="videoContainer"></div>
   </div>
 
-  <!-- 腳本部分保持不變 -->
   <script>
     let player;
     let timer;
-    let totalSeconds = 300; // 預設5分鐘
+    let totalSeconds = 300;
     let remainingSeconds = totalSeconds;
     let isRunning = false;
 
-    // 初始化計時器顯示
     document.addEventListener("DOMContentLoaded", () => {
       updateTimerDisplay();
 
-      // 監聽輸入值變更
       const minutesInput = document.getElementById("minutesInput");
       const secondsInput = document.getElementById("secondsInput");
 
@@ -304,7 +313,6 @@
         addPulseAnimation(this);
       });
 
-      // 添加輸入框數字增減按鈕
       minutesInput.addEventListener("keydown", handleInputNavigation);
       secondsInput.addEventListener("keydown", handleInputNavigation);
     });
@@ -316,6 +324,7 @@
       totalSeconds = minutes * 60 + seconds;
       remainingSeconds = totalSeconds;
       updateTimerDisplay();
+      document.body.className = "bg-initial";
     }
 
     function updateTimerDisplay() {
@@ -325,13 +334,32 @@
       const formattedSeconds = String(seconds).padStart(2, '0');
       document.getElementById("timerDisplay").textContent = `${formattedMinutes}:${formattedSeconds}`;
 
-      // 更新圓形進度條
       updateProgressCircle();
+      updateBackgroundColor();
+    }
+
+    function updateBackgroundColor() {
+      if (!isRunning) {
+        document.body.className = "bg-initial";
+        return;
+      }
+
+      let progress = remainingSeconds / totalSeconds;
+
+      if (remainingSeconds <= 0) {
+        document.body.className = "bg-complete";
+      } else if (progress <= 0.25) {
+        document.body.className = "bg-ending";
+      } else if (progress <= 0.6) {
+        document.body.className = "bg-halfway";
+      } else {
+        document.body.className = "bg-running";
+      }
     }
 
     function updateProgressCircle() {
       const progressCircle = document.querySelector('.timer-circle-progress');
-      const circumference = 2 * Math.PI * 45; // 2πr
+      const circumference = 2 * Math.PI * 45;
       let progress = remainingSeconds / totalSeconds;
 
       if (progress < 0) progress = 0;
@@ -342,13 +370,12 @@
       progressCircle.style.strokeDasharray = `${circumference} ${circumference}`;
       progressCircle.style.strokeDashoffset = offset;
 
-      // 隨著時間減少改變顏色
       if (progress > 0.66) {
-        progressCircle.style.stroke = '#3498db'; // 藍色: 較多時間
+        progressCircle.style.stroke = '#3498db';
       } else if (progress > 0.33) {
-        progressCircle.style.stroke = '#f39c12'; // 橙色: 一半時間
+        progressCircle.style.stroke = '#f39c12';
       } else {
-        progressCircle.style.stroke = '#e74c3c'; // 紅色: 接近結束
+        progressCircle.style.stroke = '#e74c3c';
       }
     }
 
@@ -357,39 +384,33 @@
       const icon = button.querySelector("i");
       const loadVideoButton = document.getElementById("loadVideoButton");
       const inputContainer = document.querySelector(".youtube-input-container");
-      const timerInputs = document.querySelector(".timer-inputs"); // 新增：獲取時間輸入區域
+      const timerInputs = document.querySelector(".timer-inputs");
 
       if (isRunning) {
-        // 暫停
         clearInterval(timer);
         isRunning = false;
         icon.className = "fas fa-play";
         if (player && player.pauseVideo) {
           player.pauseVideo();
         }
-        // 啟用設定背景音樂按鈕
+        document.body.className = "bg-initial";
         loadVideoButton.disabled = false;
         loadVideoButton.style.display = "";
-
-        // 顯示音樂選擇區域
         inputContainer.style.display = "block";
-        // 新增：顯示時間輸入區域
         timerInputs.style.display = "block";
       } else {
-        // 開始
         isRunning = true;
         icon.className = "fas fa-pause";
+
+        updateBackgroundColor();
 
         if (player && player.playVideo) {
           player.playVideo();
         }
 
-        // 禁用設定背景音樂按鈕
         loadVideoButton.disabled = true;
         loadVideoButton.style.display = "none";
-        // 隱藏音樂選擇區域
         inputContainer.style.display = "none";
-        // 新增：隱藏時間輸入區域
         timerInputs.style.display = "none";
 
         if (remainingSeconds <= 0) {
@@ -407,12 +428,10 @@
             if (player && player.pauseVideo) {
               player.pauseVideo();
             }
-            // 計時器結束時啟用設定背景音樂按鈕
+            document.body.className = "bg-complete";
             loadVideoButton.disabled = false;
             loadVideoButton.style.display = "";
-            // 計時器結束時顯示音樂選擇區域
             inputContainer.style.display = "block";
-            // 新增：計時器結束時顯示時間輸入區域
             timerInputs.style.display = "block";
           }
         }, 1000);
@@ -425,17 +444,16 @@
       remainingSeconds = totalSeconds;
       updateTimerDisplay();
 
+      document.body.className = "bg-initial";
+
       const button = document.getElementById("playPauseButton");
       const icon = button.querySelector("i");
       icon.className = "fas fa-play";
 
-      // 啟用設定背景音樂按鈕
       document.getElementById("loadVideoButton").disabled = false;
       loadVideoButton.style.display = "";
 
-      // 顯示音樂選擇區域
       document.querySelector(".youtube-input-container").style.display = "block";
-      // 新增：顯示時間輸入區域
       document.querySelector(".timer-inputs").style.display = "block";
 
       if (player && player.seekTo) {
@@ -451,7 +469,6 @@
     }
 
     function handleSelectChange() {
-      // 當使用下拉選單選擇項目時，清空自定義輸入框
       const selectElement = document.getElementById('youtubeSelect');
       if (selectElement.value) {
         document.getElementById('youtubeUrl').value = '';
@@ -459,7 +476,6 @@
     }
 
     function loadVideo() {
-      // 修改loadVideo函數以同時處理下拉選單和自定義輸入
       const selectValue = document.getElementById('youtubeSelect').value;
       const inputValue = document.getElementById('youtubeUrl').value;
       const url = selectValue || inputValue;
@@ -471,19 +487,15 @@
 
       const videoId = extractVideoId(url);
       if (videoId) {
-        // 顯示加載提示
         document.getElementById("videoContainer").innerHTML = '<p>載入中...</p>';
 
-        // 先清除之前的播放器
         if (player) {
           player.destroy();
         }
 
-        // 建立播放器容器
         document.getElementById("videoContainer").innerHTML = '<div id="youtubePlayer"></div>';
         document.getElementById("videoContainer").style.display = "block";
 
-        // 使用改進的方式創建播放器
         player = new YT.Player('youtubePlayer', {
           height: '250',
           width: '80%',
@@ -507,7 +519,6 @@
 
     function onPlayerReady(event) {
       console.log("播放器已準備就緒");
-      // 如果計時器正在運行，自動開始播放
       if (isRunning) {
         event.target.playVideo();
       }
@@ -516,7 +527,6 @@
     function onPlayerError(event) {
       let errorMessage = "影片載入失敗";
 
-      // 依據錯誤代碼提供更具體的訊息
       switch (event.data) {
         case 2:
           errorMessage = "無效的影片參數";
@@ -538,7 +548,6 @@
     }
 
     function onYouTubeIframeAPIReady() {
-      // YouTube API 已準備就緒
       console.log("YouTube API 已載入");
     }
 
@@ -547,7 +556,6 @@
     let firstScriptTag = document.getElementsByTagName('script')[0];
     firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 
-    // 添加脈衝動畫效果
     function addPulseAnimation(element) {
       element.classList.add('pulse-animation');
       setTimeout(() => {
@@ -555,7 +563,6 @@
       }, 300);
     }
 
-    // 處理上下方向鍵增減數字
     function handleInputNavigation(e) {
       const input = e.target;
       const val = parseInt(input.value) || 0;

@@ -68,71 +68,15 @@
     }
 
     .timer-inputs {
-      margin: 20px 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      margin: 10px 0;
     }
 
     .timer-inputs input {
       width: 70px;
-      padding: 12px 8px;
+      padding: 8px;
       text-align: center;
-      font-size: 1.4rem;
-      margin: 0 5px;
-      border: 2px solid #e0e0e0;
-      border-radius: 8px;
-      background-color: #f8f8f8;
-      transition: all 0.3s ease;
-      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-    }
-
-    .timer-inputs input:focus {
-      outline: none;
-      border-color: #3498db;
-      box-shadow: 0 0 8px rgba(52, 152, 219, 0.4);
-      background-color: #fff;
-    }
-
-    .timer-inputs input:hover {
-      border-color: #bbb;
-    }
-
-    .timer-inputs span {
       font-size: 1.2rem;
       margin: 0 5px;
-      color: #555;
-      font-weight: 500;
-    }
-
-    /* 隱藏輸入框的上下箭頭 */
-    .timer-inputs input[type="number"]::-webkit-inner-spin-button,
-    .timer-inputs input[type="number"]::-webkit-outer-spin-button {
-      -webkit-appearance: none;
-      margin: 0;
-    }
-
-    .timer-inputs input[type="number"] {
-      -moz-appearance: textfield;
-    }
-
-    /* 數字變化時的動畫效果 */
-    @keyframes pulse {
-      0% {
-        transform: scale(1);
-      }
-
-      50% {
-        transform: scale(1.05);
-      }
-
-      100% {
-        transform: scale(1);
-      }
-    }
-
-    .pulse-animation {
-      animation: pulse 0.3s ease-in-out;
     }
 
     .control-buttons {
@@ -238,7 +182,12 @@
   <!-- <h2>倒數計時器 + YouTube 背景音樂</h2> -->
 
   <div class="timer-container">
-
+    <div class="timer-inputs">
+      <input type="number" id="minutesInput" min="0" max="59" value="5" placeholder="分鐘">
+      <span>分</span>
+      <input type="number" id="secondsInput" min="0" max="59" value="0" placeholder="秒">
+      <span>秒</span>
+    </div>
 
     <div class="timer-display-container">
       <div class="timer-circle-container">
@@ -254,12 +203,7 @@
       </div>
     </div>
   </div>
-  <div class="timer-inputs">
-    <input type="number" id="minutesInput" min="0" max="59" value="5" placeholder="分鐘">
-    <span>分</span>
-    <input type="number" id="secondsInput" min="0" max="59" value="0" placeholder="秒">
-    <span>秒</span>
-  </div>
+
   <div class="youtube-container">
     <!-- YouTube 輸入區域 -->
     <div class="youtube-input-container">
@@ -291,22 +235,8 @@
       updateTimerDisplay();
 
       // 監聽輸入值變更
-      const minutesInput = document.getElementById("minutesInput");
-      const secondsInput = document.getElementById("secondsInput");
-
-      minutesInput.addEventListener("change", function () {
-        updateTotalTime();
-        addPulseAnimation(this);
-      });
-
-      secondsInput.addEventListener("change", function () {
-        updateTotalTime();
-        addPulseAnimation(this);
-      });
-
-      // 添加輸入框數字增減按鈕
-      minutesInput.addEventListener("keydown", handleInputNavigation);
-      secondsInput.addEventListener("keydown", handleInputNavigation);
+      document.getElementById("minutesInput").addEventListener("change", updateTotalTime);
+      document.getElementById("secondsInput").addEventListener("change", updateTotalTime);
     });
 
     function updateTotalTime() {
@@ -357,7 +287,6 @@
       const icon = button.querySelector("i");
       const loadVideoButton = document.getElementById("loadVideoButton");
       const inputContainer = document.querySelector(".youtube-input-container");
-      const timerInputs = document.querySelector(".timer-inputs"); // 新增：獲取時間輸入區域
 
       if (isRunning) {
         // 暫停
@@ -370,11 +299,8 @@
         // 啟用設定背景音樂按鈕
         loadVideoButton.disabled = false;
         loadVideoButton.style.display = "";
-
         // 顯示音樂選擇區域
         inputContainer.style.display = "block";
-        // 新增：顯示時間輸入區域
-        timerInputs.style.display = "block";
       } else {
         // 開始
         isRunning = true;
@@ -389,8 +315,6 @@
         loadVideoButton.style.display = "none";
         // 隱藏音樂選擇區域
         inputContainer.style.display = "none";
-        // 新增：隱藏時間輸入區域
-        timerInputs.style.display = "none";
 
         if (remainingSeconds <= 0) {
           resetTimer();
@@ -409,11 +333,8 @@
             }
             // 計時器結束時啟用設定背景音樂按鈕
             loadVideoButton.disabled = false;
-            loadVideoButton.style.display = "";
             // 計時器結束時顯示音樂選擇區域
             inputContainer.style.display = "block";
-            // 新增：計時器結束時顯示時間輸入區域
-            timerInputs.style.display = "block";
           }
         }, 1000);
       }
@@ -435,8 +356,6 @@
 
       // 顯示音樂選擇區域
       document.querySelector(".youtube-input-container").style.display = "block";
-      // 新增：顯示時間輸入區域
-      document.querySelector(".timer-inputs").style.display = "block";
 
       if (player && player.seekTo) {
         player.seekTo(0);
@@ -546,39 +465,6 @@
     tag.src = "https://www.youtube.com/iframe_api";
     let firstScriptTag = document.getElementsByTagName('script')[0];
     firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
-
-    // 添加脈衝動畫效果
-    function addPulseAnimation(element) {
-      element.classList.add('pulse-animation');
-      setTimeout(() => {
-        element.classList.remove('pulse-animation');
-      }, 300);
-    }
-
-    // 處理上下方向鍵增減數字
-    function handleInputNavigation(e) {
-      const input = e.target;
-      const val = parseInt(input.value) || 0;
-
-      if (e.key === "ArrowUp") {
-        e.preventDefault();
-        let newVal = val + 1;
-        if (input.id === "minutesInput" && newVal > 59) newVal = 0;
-        if (input.id === "secondsInput" && newVal > 59) newVal = 0;
-        input.value = newVal;
-        addPulseAnimation(input);
-        updateTotalTime();
-      }
-
-      if (e.key === "ArrowDown") {
-        e.preventDefault();
-        let newVal = val - 1;
-        if (newVal < 0) newVal = 59;
-        input.value = newVal;
-        addPulseAnimation(input);
-        updateTotalTime();
-      }
-    }
   </script>
 </body>
 
