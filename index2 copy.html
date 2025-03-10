@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>倒數計時器 + YouTube 背景音樂</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin: 20px;
+    }
+
+    .timer-container {
+      margin: 20px 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .timer-display-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+    }
+
+    .timer-circle-container {
+      position: relative;
+      width: 220px;
+      height: 220px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .timer-display {
+      font-size: 3.5rem;
+      font-weight: bold;
+      margin: 0;
+      position: absolute;
+      z-index: 2;
+    }
+
+    .timer-circle {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      transform: rotate(-90deg);
+    }
+
+    .timer-circle-bg {
+      fill: none;
+      stroke: #f0f0f0;
+      stroke-width: 5;
+    }
+
+    .timer-circle-progress {
+      fill: none;
+      stroke: #3498db;
+      stroke-width: 5;
+      stroke-linecap: round;
+      stroke-dasharray: 283;
+      stroke-dashoffset: 0;
+      transition: stroke-dashoffset 0.3s ease;
+    }
+
+    .timer-inputs {
+      margin: 10px 0;
+    }
+
+    .timer-inputs input {
+      width: 70px;
+      padding: 8px;
+      text-align: center;
+      font-size: 1.2rem;
+      margin: 0 5px;
+    }
+
+    .control-buttons {
+      display: flex;
+      flex-direction: column;
+      margin-left: 20px;
+    }
+
+    button {
+      padding: 10px 20px;
+      cursor: pointer;
+      margin: 5px;
+      border-radius: 5px;
+      border: none;
+      background-color: #3498db;
+      color: white;
+      font-size: 1.1rem;
+    }
+
+    button:hover {
+      background-color: #2980b9;
+    }
+
+    /* 禁用按鈕的樣式 */
+    button:disabled {
+      background-color: #cccccc;
+      color: #999999;
+      cursor: not-allowed;
+      opacity: 0.7;
+    }
+
+    button:disabled:hover {
+      background-color: #cccccc;
+    }
+
+    .youtube-container {
+      margin-top: 30px;
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .youtube-input-container {
+      width: 100%;
+      position: relative;
+      margin: 10px 0;
+    }
+
+    input[type="text"] {
+      width: 70%;
+      padding: 8px;
+      margin: 10px 0;
+      font-size: 0.9rem;
+    }
+
+    input[list] {
+      width: 70%;
+      padding: 8px;
+      margin: 10px 0;
+      font-size: 0.9rem;
+      background-position: right 10px center;
+      background-repeat: no-repeat;
+      background-size: 12px;
+      cursor: pointer;
+    }
+
+    iframe {
+      margin-top: 20px;
+      width: 80%;
+      height: 250px;
+      opacity: 0.8;
+    }
+
+    /* 隱藏視頻容器 */
+    #videoContainer {
+      display: none;
+    }
+
+    /* YouTube 設定按鈕縮小 */
+    .youtube-container button {
+      padding: 8px 12px;
+      font-size: 0.9rem;
+    }
+
+    .youtube-input-container select {
+      width: 70%;
+      padding: 8px;
+      margin: 10px 0;
+      font-size: 0.9rem;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+
+    .or-divider {
+      margin: 5px 0;
+      font-style: italic;
+      color: #666;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- <h2>倒數計時器 + YouTube 背景音樂</h2> -->
+
+  <div class="timer-container">
+    <div class="timer-inputs">
+      <input type="number" id="minutesInput" min="0" max="59" value="5" placeholder="分鐘">
+      <span>分</span>
+      <input type="number" id="secondsInput" min="0" max="59" value="0" placeholder="秒">
+      <span>秒</span>
+    </div>
+
+    <div class="timer-display-container">
+      <div class="timer-circle-container">
+        <svg class="timer-circle" viewBox="0 0 100 100">
+          <circle class="timer-circle-bg" cx="50" cy="50" r="45"></circle>
+          <circle class="timer-circle-progress" cx="50" cy="50" r="45"></circle>
+        </svg>
+        <div class="timer-display" id="timerDisplay">05:00</div>
+      </div>
+      <div class="control-buttons">
+        <button id="playPauseButton" onclick="togglePlayPause()"><i class="fas fa-play"></i></button>
+        <button id="resetButton" onclick="resetTimer()"><i class="fas fa-redo"></i></button>
+      </div>
+    </div>
+  </div>
+
+  <div class="youtube-container">
+    <!-- YouTube 輸入區域 -->
+    <div class="youtube-input-container">
+      <select id="youtubeSelect" onchange="handleSelectChange()">
+        <option value="" disabled selected>-- 選擇預設音樂 --</option>
+        <option value="https://www.youtube.com/watch?v=oLGwCa2OBLU">冥想音樂 - 放鬆心靈</option>
+        <option value="https://www.youtube.com/watch?v=5qap5aO4i9A">Lo-fi 學習音樂</option>
+        <option value="https://www.youtube.com/watch?v=y7e-GC6oGhg">輕鬆鋼琴音樂</option>
+        <option value="https://www.youtube.com/watch?v=lTRiuFIWV54">放鬆自然聲音</option>
+        <option value="https://www.youtube.com/watch?v=77ZozI0rw7w">專注工作音樂</option>
+      </select>
+      <p class="or-divider">或</p>
+      <input type="text" id="youtubeUrl" placeholder="輸入自定義 YouTube 影片網址">
+    </div>
+    <button id="loadVideoButton" onclick="loadVideo()">設定背景音樂</button>
+    <div id="videoContainer"></div>
+  </div>
+
+  <!-- 腳本部分保持不變 -->
+  <script>
+    let player;
+    let timer;
+    let totalSeconds = 300; // 預設5分鐘
+    let remainingSeconds = totalSeconds;
+    let isRunning = false;
+
+    // 初始化計時器顯示
+    document.addEventListener("DOMContentLoaded", () => {
+      updateTimerDisplay();
+
+      // 監聽輸入值變更
+      document.getElementById("minutesInput").addEventListener("change", updateTotalTime);
+      document.getElementById("secondsInput").addEventListener("change", updateTotalTime);
+    });
+
+    function updateTotalTime() {
+      const minutes = parseInt(document.getElementById("minutesInput").value) || 0;
+      const seconds = parseInt(document.getElementById("secondsInput").value) || 0;
+
+      totalSeconds = minutes * 60 + seconds;
+      remainingSeconds = totalSeconds;
+      updateTimerDisplay();
+    }
+
+    function updateTimerDisplay() {
+      const minutes = Math.floor(remainingSeconds / 60);
+      const seconds = remainingSeconds % 60;
+      const formattedMinutes = String(minutes).padStart(2, '0');
+      const formattedSeconds = String(seconds).padStart(2, '0');
+      document.getElementById("timerDisplay").textContent = `${formattedMinutes}:${formattedSeconds}`;
+
+      // 更新圓形進度條
+      updateProgressCircle();
+    }
+
+    function updateProgressCircle() {
+      const progressCircle = document.querySelector('.timer-circle-progress');
+      const circumference = 2 * Math.PI * 45; // 2πr
+      let progress = remainingSeconds / totalSeconds;
+
+      if (progress < 0) progress = 0;
+      if (progress > 1) progress = 1;
+
+      const offset = circumference - (progress * circumference);
+
+      progressCircle.style.strokeDasharray = `${circumference} ${circumference}`;
+      progressCircle.style.strokeDashoffset = offset;
+
+      // 隨著時間減少改變顏色
+      if (progress > 0.66) {
+        progressCircle.style.stroke = '#3498db'; // 藍色: 較多時間
+      } else if (progress > 0.33) {
+        progressCircle.style.stroke = '#f39c12'; // 橙色: 一半時間
+      } else {
+        progressCircle.style.stroke = '#e74c3c'; // 紅色: 接近結束
+      }
+    }
+
+    function togglePlayPause() {
+      const button = document.getElementById("playPauseButton");
+      const icon = button.querySelector("i");
+      const loadVideoButton = document.getElementById("loadVideoButton");
+      const inputContainer = document.querySelector(".youtube-input-container");
+
+      if (isRunning) {
+        // 暫停
+        clearInterval(timer);
+        isRunning = false;
+        icon.className = "fas fa-play";
+        if (player && player.pauseVideo) {
+          player.pauseVideo();
+        }
+        // 啟用設定背景音樂按鈕
+        loadVideoButton.disabled = false;
+        loadVideoButton.style.display = "";
+        // 顯示音樂選擇區域
+        inputContainer.style.display = "block";
+      } else {
+        // 開始
+        isRunning = true;
+        icon.className = "fas fa-pause";
+
+        if (player && player.playVideo) {
+          player.playVideo();
+        }
+
+        // 禁用設定背景音樂按鈕
+        loadVideoButton.disabled = true;
+        loadVideoButton.style.display = "none";
+        // 隱藏音樂選擇區域
+        inputContainer.style.display = "none";
+
+        if (remainingSeconds <= 0) {
+          resetTimer();
+        }
+
+        timer = setInterval(() => {
+          remainingSeconds--;
+          updateTimerDisplay();
+
+          if (remainingSeconds <= 0) {
+            clearInterval(timer);
+            isRunning = false;
+            icon.className = "fas fa-play";
+            if (player && player.pauseVideo) {
+              player.pauseVideo();
+            }
+            // 計時器結束時啟用設定背景音樂按鈕
+            loadVideoButton.disabled = false;
+            // 計時器結束時顯示音樂選擇區域
+            inputContainer.style.display = "block";
+          }
+        }, 1000);
+      }
+    }
+
+    function resetTimer() {
+      clearInterval(timer);
+      isRunning = false;
+      remainingSeconds = totalSeconds;
+      updateTimerDisplay();
+
+      const button = document.getElementById("playPauseButton");
+      const icon = button.querySelector("i");
+      icon.className = "fas fa-play";
+
+      // 啟用設定背景音樂按鈕
+      document.getElementById("loadVideoButton").disabled = false;
+      loadVideoButton.style.display = "";
+
+      // 顯示音樂選擇區域
+      document.querySelector(".youtube-input-container").style.display = "block";
+
+      if (player && player.seekTo) {
+        player.seekTo(0);
+        player.pauseVideo();
+      }
+    }
+
+    function extractVideoId(url) {
+      const regex = /(?:https?:\/\/)?(?:www\.|m\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/v\/)([a-zA-Z0-9_-]{11})/;
+      const match = url.match(regex);
+      return match ? match[1] : null;
+    }
+
+    function handleSelectChange() {
+      // 當使用下拉選單選擇項目時，清空自定義輸入框
+      const selectElement = document.getElementById('youtubeSelect');
+      if (selectElement.value) {
+        document.getElementById('youtubeUrl').value = '';
+      }
+    }
+
+    function loadVideo() {
+      // 修改loadVideo函數以同時處理下拉選單和自定義輸入
+      const selectValue = document.getElementById('youtubeSelect').value;
+      const inputValue = document.getElementById('youtubeUrl').value;
+      const url = selectValue || inputValue;
+
+      if (!url) {
+        alert("請選擇預設音樂或輸入 YouTube 影片網址");
+        return;
+      }
+
+      const videoId = extractVideoId(url);
+      if (videoId) {
+        // 顯示加載提示
+        document.getElementById("videoContainer").innerHTML = '<p>載入中...</p>';
+
+        // 先清除之前的播放器
+        if (player) {
+          player.destroy();
+        }
+
+        // 建立播放器容器
+        document.getElementById("videoContainer").innerHTML = '<div id="youtubePlayer"></div>';
+        document.getElementById("videoContainer").style.display = "block";
+
+        // 使用改進的方式創建播放器
+        player = new YT.Player('youtubePlayer', {
+          height: '250',
+          width: '80%',
+          videoId: videoId,
+          playerVars: {
+            'autoplay': 0,
+            'controls': 1,
+            'rel': 0,
+            'fs': 0,
+            'modestbranding': 1
+          },
+          events: {
+            'onReady': onPlayerReady,
+            'onError': onPlayerError
+          }
+        });
+      } else {
+        alert("請輸入有效的 YouTube 影片網址");
+      }
+    }
+
+    function onPlayerReady(event) {
+      console.log("播放器已準備就緒");
+      // 如果計時器正在運行，自動開始播放
+      if (isRunning) {
+        event.target.playVideo();
+      }
+    }
+
+    function onPlayerError(event) {
+      let errorMessage = "影片載入失敗";
+
+      // 依據錯誤代碼提供更具體的訊息
+      switch (event.data) {
+        case 2:
+          errorMessage = "無效的影片參數";
+          break;
+        case 5:
+          errorMessage = "HTML5 播放器錯誤";
+          break;
+        case 100:
+          errorMessage = "找不到影片或已被移除";
+          break;
+        case 101:
+        case 150:
+          errorMessage = "影片擁有者不允許在嵌入播放器中播放";
+          break;
+      }
+
+      alert(`YouTube 錯誤: ${errorMessage}`);
+      console.error("YouTube 播放器錯誤:", event.data);
+    }
+
+    function onYouTubeIframeAPIReady() {
+      // YouTube API 已準備就緒
+      console.log("YouTube API 已載入");
+    }
+
+    let tag = document.createElement('script');
+    tag.src = "https://www.youtube.com/iframe_api";
+    let firstScriptTag = document.getElementsByTagName('script')[0];
+    firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+  </script>
+</body>
+
+</html>
